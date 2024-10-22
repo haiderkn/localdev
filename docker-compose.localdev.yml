@@ -1,0 +1,45 @@
+networks:
+  local-network:
+    driver: bridge
+
+services:
+  app:
+    image: backend-service:15.10.2024
+    restart: always
+    build:
+      context: ../backend-service/ # Updated to point to backend-service folder
+      dockerfile: ./Dockerfile
+    container_name: django-app
+    ports:
+      - "8000:8000"
+    environment:
+      DJANGO_APP: run.py
+      DJANGO_DEBUG: 1
+    volumes:
+      - ../backend-service/app:/app  # Updated to mount the correct app directory
+    networks:
+      - local-network
+    command: >
+      sh -c "
+      python manage.py makemigrations &&
+      python manage.py migrate &&
+      python manage.py runserver 0.0.0.0:8000"
+
+    depends_on:
+      - db
+
+  db:
+    image: postgres:alpine3.20
+    restart: always
+    container_name: postgres
+    volumes:
+      - ./dev-db-data:/var/lib/postgresql/data
+    networks:
+      - local-network
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=haider
+      - POSTGRES_PASSWORD=haider24
+
+volumes:
+  dev-db-data:
